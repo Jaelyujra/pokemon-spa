@@ -37,7 +37,7 @@ export function setupThemeToggle() {
     const themeIcon = document.getElementById('theme-icon');
     const html = document.documentElement;
 
-    // Establecer tema inicial
+    // Establecer tema inicial desde localStorage
     const theme = getTheme();
     if (theme === 'dark') {
         html.classList.add('dark');
@@ -75,6 +75,8 @@ export function setupMobileMenu() {
     const menuToggle = document.getElementById('menu-mobile-toggle');
     const mobileMenu = document.getElementById('mobile-menu');
     const mobileLinks = mobileMenu.querySelectorAll('a');
+
+    if (!menuToggle) return;
 
     menuToggle.addEventListener('click', () => {
         mobileMenu.classList.toggle('hidden');
