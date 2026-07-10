@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon SPA Game</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Animaciones personalizadas */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-5px);
+            }
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes typewriter {
+            from {
+                width: 0;
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .slide-in-down {
+            animation: slideInDown 0.5s ease-out;
+        }
+
+        .pulse-glow {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        .shake {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        .float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Dark mode personalizado */
+        [data-theme="dark"] {
+            color-scheme: dark;
+        }
+
+        /* Tarjeta Pokémon */
+        .pokemon-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .pokemon-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Barras de stats */
+        .stat-bar {
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .dark .stat-bar {
+            background-color: #374151;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transition: width 0.5s ease;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            border: 4px solid rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #3b82f6;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Modal personalizado */
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        /* Tipografía gaming */
+        .gaming-title {
+            font-family: 'Arial', sans-serif;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
+        }
+
+        /* Type badges */
+        .type-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            text-transform: capitalize;
+            color: white;
+            display: inline-block;
+        }
+
+        /* Battle styles */
+        .pokemon-sprite {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        .battle-log {
+            max-height: 200px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .battle-message {
+            animation: slideInDown 0.3s ease-out;
+        }
+
+        /* Responsive grid */
+        @media (max-width: 768px) {
+            .pokemon-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .pokemon-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg sticky top-0 z-50">
+        <nav class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="#/" class="gaming-title text-xl md:text-3xl text-white flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <i class="fas fa-ball"></i> Pokémon SPA
+            </a>
+            
+            <div class="flex items-center gap-2 md:gap-4">
+                <!-- Tema toggle -->
+                <button id="theme-toggle" class="bg-white dark:bg-gray-800 text-blue-600 dark:text-yellow-400 p-2 md:px-3 md:py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Toggle tema">
+                    <i id="theme-icon" class="fas fa-moon"></i>
+                </button>
+                
+                <!-- Navegación desktop -->
+                <div class="hidden md:flex gap-2">
+                    <a href="#/" class="text-white hover:bg-white/20 px-3 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-home"></i> Inicio
+                    </a>
+                    <a href="#/pokedex" class="text-white hover:bg-white/20 px-3 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-book"></i> Pokédex
+                    </a>
+                    <a href="#/battle" class="text-white hover:bg-white/20 px-3 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-sword"></i> Batalla
+                    </a>
+                </div>
+                
+                <!-- Menú móvil -->
+                <button id="menu-mobile-toggle" class="md:hidden text-white text-xl">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </nav>
+        
+        <!-- Menú móvil desplegable -->
+        <div id="mobile-menu" class="hidden md:hidden bg-blue-700 px-4 pb-4">
+            <a href="#/" class="block text-white hover:bg-blue-600 px-3 py-2 rounded-lg transition-colors mb-1">
+                <i class="fas fa-home"></i> Inicio
+            </a>
+            <a href="#/pokedex" class="block text-white hover:bg-blue-600 px-3 py-2 rounded-lg transition-colors mb-1">
+                <i class="fas fa-book"></i> Pokédex
+            </a>
+            <a href="#/battle" class="block text-white hover:bg-blue-600 px-3 py-2 rounded-lg transition-colors">
+                <i class="fas fa-sword"></i> Batalla
+            </a>
+        </div>
+    </header>
+
+    <!-- Main App Container -->
+    <main id="app" class="max-w-7xl mx-auto px-4 py-8 min-h-screen">
+        <!-- El contenido se inyectará aquí -->
+    </main>
+
+    <!-- Modals Container -->
+    <div id="modals-container"></div>
+
+    <!-- Scripts modulares -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
