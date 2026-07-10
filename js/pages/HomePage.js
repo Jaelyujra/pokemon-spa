@@ -3,7 +3,7 @@
  * Vista principal con grid de Pokémon y funcionalidades de búsqueda/filtrado
  */
 
-import { getPokemonList, getTypesList, getRandomPokemon } from '../api/pokeapi.js';
+import { getPokemonList, getTypesList, getPokemonWeaknesses } from '../api/pokeapi.js';
 import { createTypeBadge, getTypeColor, padNumber } from '../utils/ui.js';
 import { isPokemonCaught, catchPokemon, releasePokemon } from '../utils/storage.js';
 import { debounce, isAtScrollBottom } from '../utils/helpers.js';
@@ -14,6 +14,7 @@ let allPokemon = [];
 let isLoading = false;
 let selectedTypes = new Set();
 let searchQuery = '';
+let pokemonWeaknesses = new Map();
 
 export const HomePage = {
     async render(params) {
@@ -21,6 +22,7 @@ export const HomePage = {
         allPokemon = [];
         selectedTypes.clear();
         searchQuery = '';
+        pokemonWeaknesses.clear();
 
         return `
             <div class="space-y-6 fade-in-up">
@@ -56,7 +58,7 @@ export const HomePage = {
                 </div>
 
                 <!-- Grid de Pokémon -->
-                <div id="pokemon-grid" class="pokemon-grid grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div id="pokemon-grid" class="pokemon-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <!-- Se carga dinámicamente -->
                 </div>
 
@@ -184,6 +186,12 @@ async function loadMorePokemon() {
             try {
                 const detail = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.name}`)
                     .then(r => r.json());
+                
+                // Obtener debilidades para este Pokémon
+                const pokemonTypes = detail.types.map(t => t.type.name);
+                const weaknesses = await getPokemonWeaknesses(pokemonTypes);
+                pokemonWeaknesses.set(detail.id, weaknesses);
+                
                 allPokemon.push(detail);
             } catch (error) {
                 console.error(`Error loading ${pokemon.name}:`, error);
@@ -247,24 +255,59 @@ function renderPokemonGrid() {
 }
 
 /**
- * Crea una tarjeta de Pokémon
+ * Crea una tarjeta de Pokémon con debilidades
  */
 function createPokemonCard(pokemon) {
     const isCaught = isPokemonCaught(pokemon.id);
-    const image = pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default;
+    const image = pokemon.sprites.other?.['official-artwork']?.front_default || 
+                  pokemon.sprites.front_default || 
+                  'https://via.placeholder.com/200?text=No+Image';
+    
+    const types = pokemon.types.map(t => t.type.name);
+    const weaknesses = pokemonWeaknesses.get(pokemon.id) || [];
+    const topWeaknesses = weaknesses.slice(0, 3); // Mostrar las 3 principales debilidades
 
     return `
-        <div class="pokemon-card bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all cursor-pointer" data-pokemon-id="${pokemon.id}">
-            <div class="bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-600 p-4 text-center">
-                <img src="${image}" alt="${pokemon.name}" class="w-full h-48 object-contain pokemon-sprite">
+        <div class="pokemon-card bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer h-full flex flex-col" data-pokemon-id="${pokemon.id}">
+            <!-- Imagen -->
+            <div class="bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-600 p-4 text-center flex-1">
+                <img src="${image}" alt="${pokemon.name}" class="w-full h-40 object-contain pokemon-sprite" onerror="this.src='https://via.placeholder.com/200?text=No+Image'">
             </div>
-            <div class="p-4">
-                <div class="text-sm text-gray-500 dark:text-gray-400">#${padNumber(pokemon.id)}</div>
-                <h3 class="text-lg font-bold capitalize mb-2">${pokemon.name}</h3>
-                <div class="flex flex-wrap gap-1 mb-3">
-                    ${pokemon.types.map(t => createTypeBadge(t.type.name)).join('')}
+            
+            <!-- Información -->
+            <div class="p-4 space-y-3 flex-1 flex flex-col">
+                <div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-semibold">#${padNumber(pokemon.id)}</div>
+                    <h3 class="text-lg font-bold capitalize">${pokemon.name}</h3>
                 </div>
-                <button class="catch-btn w-full py-2 px-3 rounded-lg text-white font-semibold transition-colors text-sm ${
+                
+                <!-- Tipos -->
+                <div>
+                    <div class="text-xs text-gray-600 dark:text-gray-300 font-semibold mb-1">Tipo:</div>
+                    <div class="flex flex-wrap gap-1">
+                        ${types.map(t => createTypeBadge(t)).join('')}
+                    </div>
+                </div>
+                
+                <!-- Debilidades -->
+                ${topWeaknesses.length > 0 ? `
+                    <div>
+                        <div class="text-xs text-gray-600 dark:text-gray-300 font-semibold mb-1">Débil a:</div>
+                        <div class="flex flex-wrap gap-1">
+                            ${topWeaknesses.map(weakness => {
+                                const color = getTypeColor(weakness);
+                                return `
+                                    <span class="type-badge text-xs ${color.bg} ${color.text}">
+                                        ${weakness}
+                                    </span>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <!-- Botón de captura -->
+                <button class="catch-btn w-full py-2 px-3 rounded-lg text-white font-semibold transition-colors text-sm mt-auto ${
                     isCaught 
                     ? 'bg-red-600 hover:bg-red-700' 
                     : 'bg-green-600 hover:bg-green-700'
