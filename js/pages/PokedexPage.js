@@ -56,7 +56,7 @@ export const PokedexPage = {
                 </div>
 
                 <!-- Grid de Pokémon capturados -->
-                <div id="pokedex-grid" class="pokemon-grid grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div id="pokedex-grid" class="pokemon-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     ${caughtList.map(pokemon => createCaughtPokemonCard(pokemon)).join('')}
                 </div>
 
@@ -72,6 +72,8 @@ export const PokedexPage = {
 
     mount(params) {
         const grid = document.getElementById('pokedex-grid');
+        if (!grid) return;
+
         const cards = grid.querySelectorAll('.pokemon-card');
 
         cards.forEach(card => {
@@ -108,17 +110,19 @@ export const PokedexPage = {
  */
 function createCaughtPokemonCard(pokemon) {
     return `
-        <div class="pokemon-card bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all cursor-pointer" data-pokemon-id="${pokemon.id}">
-            <div class="bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-600 p-4 text-center">
-                <img src="${pokemon.image}" alt="${pokemon.name}" class="w-full h-48 object-contain pokemon-sprite">
+        <div class="pokemon-card bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all cursor-pointer h-full flex flex-col" data-pokemon-id="${pokemon.id}">
+            <div class="bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-600 p-4 text-center flex-1">
+                <img src="${pokemon.image}" alt="${pokemon.name}" class="w-full h-40 object-contain pokemon-sprite" onerror="this.src='https://via.placeholder.com/200?text=No+Image'">
             </div>
-            <div class="p-4">
-                <div class="text-sm text-gray-500 dark:text-gray-400">#${padNumber(pokemon.id)}</div>
-                <h3 class="text-lg font-bold capitalize mb-2">${pokemon.name}</h3>
-                <div class="flex flex-wrap gap-1 mb-3">
+            <div class="p-4 space-y-3 flex-1 flex flex-col">
+                <div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-semibold">#${padNumber(pokemon.id)}</div>
+                    <h3 class="text-lg font-bold capitalize">${pokemon.name}</h3>
+                </div>
+                <div class="flex flex-wrap gap-1">
                     ${pokemon.types.map(t => createTypeBadge(t)).join('')}
                 </div>
-                <button class="release-btn w-full py-2 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors text-sm">
+                <button class="release-btn w-full py-2 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors text-sm mt-auto">
                     <i class="fas fa-trash"></i> Liberar
                 </button>
             </div>
