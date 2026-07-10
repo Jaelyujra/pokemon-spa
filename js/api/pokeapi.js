@@ -64,7 +64,7 @@ export async function getTypesList() {
 }
 
 /**
- * Obtiene detalles de un tipo específico
+ * Obtiene detalles de un tipo específico (incluyendo debilidades)
  */
 export async function getTypeDetail(typeName) {
     if (CACHE.has(`type-${typeName}`)) {
@@ -80,6 +80,63 @@ export async function getTypeDetail(typeName) {
     } catch (error) {
         console.error('getTypeDetail error:', error);
         throw error;
+    }
+}
+
+/**
+ * Obtiene las debilidades de un Pokémon basado en sus tipos
+ */
+export async function getPokemonWeaknesses(pokemonTypes) {
+    try {
+        const weaknessesMap = new Map();
+
+        // Para cada tipo del Pokémon, obtener qué tipos son super-efectivos contra él
+        for (const type of pokemonTypes) {
+            const typeDetail = await getTypeDetail(type);
+            
+            // damage_relations.damage_from contiene los tipos que son super-efectivos
+            if (typeDetail.damage_relations && typeDetail.damage_relations.damage_from) {
+                typeDetail.damage_relations.damage_from.forEach(damageType => {
+                    const typeName = damageType.name;
+                    weaknessesMap.set(typeName, (weaknessesMap.get(typeName) || 0) + 1);
+                });
+            }
+        }
+
+        // Retornar los tipos ordenados por número de debilidades
+        return Array.from(weaknessesMap.entries())
+            .sort((a, b) => b[1] - a[1])
+            .map(([type]) => type);
+    } catch (error) {
+        console.error('getPokemonWeaknesses error:', error);
+        return [];
+    }
+}
+
+/**
+ * Obtiene las resistencias de un Pokémon basado en sus tipos
+ */
+export async function getPokemonResistances(pokemonTypes) {
+    try {
+        const resistancesMap = new Map();
+
+        for (const type of pokemonTypes) {
+            const typeDetail = await getTypeDetail(type);
+            
+            if (typeDetail.damage_relations && typeDetail.damage_relations.damage_to) {
+                typeDetail.damage_relations.damage_to.forEach(resistType => {
+                    const typeName = resistType.name;
+                    resistancesMap.set(typeName, (resistancesMap.get(typeName) || 0) + 1);
+                });
+            }
+        }
+
+        return Array.from(resistancesMap.entries())
+            .sort((a, b) => b[1] - a[1])
+            .map(([type]) => type);
+    } catch (error) {
+        console.error('getPokemonResistances error:', error);
+        return [];
     }
 }
 
